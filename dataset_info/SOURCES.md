@@ -3,8 +3,8 @@
 This dataset includes images extracted from publicly available online videos.
 The videos were used solely as a source of visual data for research purposes.
 
-All images were extracted manually or semi-automatically as individual frames.
-The dataset authors do not claim ownership of the original video content.
+All images were extracted manually as individual frames.
+The dataset author do not claim ownership of the original video content.
 
 ---
 
