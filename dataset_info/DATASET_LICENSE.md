@@ -2,7 +2,7 @@ Custom Dataset License
 
 1. Overview
 This dataset contains a mixture of content:
-- A portion of the dataset is derived from the XYZ Dataset, licensed under
+- A portion of the dataset is derived from the guitar Dataset by B101, licensed under
   Creative Commons Attribution 4.0 International (CC BY 4.0).
 - Additional images were extracted from publicly available YouTube videos
   and other third-party sources.
@@ -44,12 +44,7 @@ If you use this dataset in academic or research work, you must cite:
 A recommended citation format is provided in the dataset description
 or repository.
 
-
 7. Disclaimer
 The dataset is provided "as is", without warranties of any kind, express or
 implied. The dataset authors assume no responsibility for any claims arising
 from the use of this dataset.
-
-
-(If you are the owner of any content included in this dataset and wish it
-to be removed, please contact the dataset authors.)
