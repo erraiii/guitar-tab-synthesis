@@ -4,8 +4,7 @@ Custom Dataset License
 This dataset contains a mixture of content:
 - A portion of the dataset is derived from the guitar Dataset by B101, licensed under
   Creative Commons Attribution 4.0 International (CC BY 4.0).
-- Additional images were extracted from publicly available YouTube videos
-  and other third-party sources.
+- Additional images were extracted from publicly available YouTube videos.
 
 This dataset is intended for research and educational purposes only.
 The dataset authors do not claim ownership of the original images or videos.
