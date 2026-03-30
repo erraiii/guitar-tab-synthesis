@@ -5,12 +5,13 @@ from typing import List, Optional
 @dataclass
 class Note:
     midi: int
-    frequency: float
+    # frequency: float
 
 
 @dataclass
 class AudioNote:
-    timestamp: float
+    start: float
+    end: float
     notes: List[Note]
 
 
