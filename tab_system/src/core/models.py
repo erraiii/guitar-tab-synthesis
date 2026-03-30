@@ -1,18 +1,25 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
-
+'''
 @dataclass
 class Note:
     midi: int
     # frequency: float
-
+'''
 
 @dataclass
 class AudioNote:
     start: float
     end: float
-    notes: List[Note]
+    pitch: int
+
+
+@dataclass
+class AudioEvent:
+    start: float
+    end: float
+    notes: List[AudioNote]
 
 
 @dataclass

@@ -1,5 +1,6 @@
 import requests
-from core.models import AudioNote, Note
+from core.models import AudioNote #, Note
+from audio.postprocessing import process_notes
 
 
 class AudioProcessor:
@@ -32,10 +33,12 @@ class AudioProcessor:
                 AudioNote(
                     start=note["start"],
                     end=note["end"],
-                    notes=[Note(midi=note["pitch"])]
+                    pitch=note["pitch"]
                 )
             )
 
         print(f"[AudioProcessor] got {len(audio_notes)} notes")
+        audio_notes = process_notes(audio_notes)
+        print(f"[AudioProcessor] got {len(audio_notes)} notes after filters")
 
         return audio_notes
