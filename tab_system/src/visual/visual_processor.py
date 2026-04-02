@@ -1,10 +1,11 @@
 import cv2
+from utils.audio import extract_audio
 
 
 class VisualProcessor:
     def __init__(self, video_path: str):
         print(f"[VisualProcessor] init {video_path}")
-
+        self.video_path = video_path
         self.cap = cv2.VideoCapture(video_path)
 
         if not self.cap.isOpened():
@@ -31,6 +32,9 @@ class VisualProcessor:
 
     def release(self):
         self.cap.release()
+
+    def extract_audio(self, output_path=None):
+        return extract_audio(self.video_path, output_path)
 
     def process(self, frame):
         """

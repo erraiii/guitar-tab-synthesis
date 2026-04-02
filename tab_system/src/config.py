@@ -1,3 +1,5 @@
+VIDEO_PATH = "C:/Users/aivan/Downloads/blue_short.mp4"
+
 STANDARD_TUNING = [
     40,  # E2
     45,  # A2
