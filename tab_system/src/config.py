@@ -24,3 +24,5 @@ STANDARD_TUNING = [
     59,  # B3
     64,  # E4
 ]
+
+MODEL_PATH = MODELS_DIR / "guitar_model.pt"

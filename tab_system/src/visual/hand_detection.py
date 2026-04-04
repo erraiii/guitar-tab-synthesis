@@ -3,6 +3,7 @@ from utils.download import download_if_missing
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+import cv2
 
 
 class HandDetector:
@@ -43,15 +44,22 @@ class HandTracker:
     def track(self, duration):
         results = []
 
-        t = 0
-        while t < duration:
+        frame_idx = 0
+        frame_step = 2  # каждый второй кадр
+
+        total_frames = int(self.vp.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        while frame_idx < total_frames:
+            t = frame_idx / self.vp.fps
+
             frame = self.vp.get_frame_at(t)
 
             if frame is None:
-                t += self.step
+                frame_idx += frame_step
                 continue
 
             result = self.detector.detect(frame, int(t * 1000))
+
             if result.hand_landmarks:
                 best_hand = None
                 best_score = -1
@@ -78,7 +86,7 @@ class HandTracker:
                         "fingertips": fingertips
                     })
 
-            t += self.step
+            frame_idx += frame_step
 
         return results
 
