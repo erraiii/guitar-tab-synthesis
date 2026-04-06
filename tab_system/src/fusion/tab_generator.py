@@ -61,10 +61,11 @@ class TabGenerator:
             # --GEOMETRY--
             if guitar is not None and len(guitar.frets) > 0:
                 # строим линии струн через GeometryProcessor
-                midstrings_abc = self.geometry_processor.process(hand['box'], guitar)
+                midstrings_abc, fret_lines = self.geometry_processor.process(hand['box'], guitar, frame.shape)
 
                 # рисуем межструнные линии
                 frame = draw_midstrings(frame, midstrings_abc)
+                frame = draw_midstrings(frame, fret_lines)
 
             # --VISUALIZE GUITAR--
             frame = visualize_detections(

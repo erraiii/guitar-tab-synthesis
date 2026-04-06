@@ -196,6 +196,75 @@ def fit_line(points):
 
     return (a, b, c) # centroid, direction
 
+
+def frets_to_abc(frets, mean_dir):
+    """
+    frets: список Fret (с center_line)
+    mean_dir: np.array(2,) — среднее направление ладов (нормированное)
+
+    return:
+        список (a, b, c)
+    """
+
+    lines_abc = []
+
+    for f in frets:
+        p1, p2 = f.center_line
+        p1 = np.array(p1)
+        p2 = np.array(p2)
+
+        d = p2 - p1
+
+        norm = np.linalg.norm(d)
+        if norm < 1e-6:
+            continue
+
+        d = d / norm
+
+        # выравниваем направление всех ладов (но вроде все это уже сделано)
+        if np.dot(d, mean_dir) < 0:
+            d = -d
+
+        # строим нормаль
+        a = -d[1]
+        b = d[0]
+
+        # считаем c через точку
+        c = -(a * p1[0] + b * p1[1])
+
+        lines_abc.append((a, b, c))
+
+    return lines_abc
+
+
+def point_dir_to_abc(point, direction):
+    """
+    point: (x, y)
+    direction: (dx, dy)
+
+    return:
+        (a, b, c)  - прямая ax + by + c = 0
+    """
+
+    p = np.array(point)
+    d = np.array(direction)
+
+    norm = np.linalg.norm(d)
+    if norm < 1e-6:
+        return None
+
+    d = d / norm
+
+    # нормаль к линии
+    a = -d[1]
+    b = d[0]
+
+    # коэффициент c
+    c = -(a * p[0] + b * p[1])
+
+    return (a, b, c)
+
+
 # -- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ --
 def polygon_to_bbox(corners):
     """
@@ -209,8 +278,6 @@ def polygon_to_bbox(corners):
 
 
 def bboxes_intersect(boxA, boxB):
-    # boxA = [float(x) for x in boxA]
-    # boxB = [float(x) for x in boxB]
 
     xA = max(boxA[0], boxB[0])
     yA = max(boxA[1], boxB[1])
@@ -218,3 +285,30 @@ def bboxes_intersect(boxA, boxB):
     yB = min(boxA[3], boxB[3])
 
     return (xA < xB) and (yA < yB)
+
+
+# функции для сортировки
+def sort_frets_right_to_left(fret_lines, img_shape):
+    h, w = img_shape[:2]
+    ref_point = np.array([w, h/2])
+
+    def line_pos(line):
+        a, b, c = line
+        return a*ref_point[0] + b*ref_point[1] + c
+
+    # Большее значение = линия правее
+    lines = sorted(fret_lines, key=line_pos, reverse=True)
+
+    return lines
+
+
+def sort_strings_bottom_to_top(string_lines, img_shape):
+    h, w = img_shape[:2]
+    ref_point = np.array([w/2, h])
+
+    def line_pos(line):
+        a, b, c = line
+        return a*ref_point[0] + b*ref_point[1] + c
+
+    # сортируем по убыванию, чтобы первый был самый нижний
+    return sorted(string_lines, key=line_pos, reverse=True)
