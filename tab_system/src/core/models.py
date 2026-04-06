@@ -65,10 +65,44 @@ class Detection:
 class Fret:
     corners: np.ndarray
     index: int | None = None
+    _center_line: tuple | None = None
+    string_points: np.ndarray | None = None
 
     @property
     def center(self):
         return self.corners.mean(axis=0)
+
+    @property
+    def center_line(self):
+        if self._center_line is None:
+            self._center_line = self._compute_center_line()
+        return self._center_line
+
+    @center_line.setter
+    def center_line(self, value):
+        self._center_line = value
+
+    def _compute_center_line(self):
+        pts = np.array(self.corners)
+
+        edges = [
+            (pts[0], pts[1]),
+            (pts[1], pts[2]),
+            (pts[2], pts[3]),
+            (pts[3], pts[0]),
+        ]
+
+        lengths = [np.linalg.norm(a - b) for a, b in edges]
+        idx = np.argsort(lengths)[:2]
+
+        midpoints = []
+        for i in idx:
+            a, b = edges[i]
+            midpoints.append((a + b) / 2)
+
+        return midpoints[0], midpoints[1]
+
+
 
 
 @dataclass
@@ -99,3 +133,9 @@ class GuitarDetections:
     @property
     def num_frets(self) -> int:
         return len(self.frets)
+
+
+@dataclass
+class FingerPosition:
+    string: int
+    fret: int

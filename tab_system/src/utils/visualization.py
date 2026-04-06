@@ -71,21 +71,21 @@ def visualize_detections(image, guitar_det, show=True, return_img=False):
     # --- Frets ---
     for i, fret in enumerate(guitar_det.frets):
         draw_obb(vis_img, fret.corners, (0, 0, 255))
-
+        '''
         # индекс (если есть)
-        # label = str(fret.index) if fret.index is not None else str(i)
+        label = str(fret.index) if fret.index is not None else str(i)
 
         center = fret.center.astype(int)
-        '''
+
         cv2.putText(
             vis_img,
             label,
             tuple(center),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
+            1.6,
             (255, 255, 255),
             2
-        )'''
+        )
 
     # --- Time ---
     if guitar_det.time is not None:
@@ -97,7 +97,7 @@ def visualize_detections(image, guitar_det, show=True, return_img=False):
             1,
             (0, 255, 0),
             2
-        )
+        )'''
 
     if show:
         plt.figure(figsize=(8, 8))
@@ -107,3 +107,38 @@ def visualize_detections(image, guitar_det, show=True, return_img=False):
 
     if return_img:
         return vis_img
+
+
+def draw_midstrings(img, midstrings_abc):
+    """
+    midstrings_abc: список (a, b, c)
+    """
+    img = img.copy()
+    h, w = img.shape[:2]
+
+    for a, b, c in midstrings_abc:
+        if abs(b) < 1e-6:  # вертикальная линия
+            x = int(-c / a)
+            p1 = (x, 0)
+            p2 = (x, h-1)
+        else:
+            y0 = int(-(a*0 + c)/b)
+            y1 = int(-(a*(w-1) + c)/b)
+            p1 = (0, y0)
+            p2 = (w-1, y1)
+
+        cv2.line(img, p1, p2, (0,255,255), 2)
+
+    return img
+
+def show_midstrings(image, midstrings):
+
+    vis = draw_midstrings(image, midstrings)
+
+    # BGR → RGB
+    vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
+
+    plt.figure(figsize=(10,6))
+    plt.imshow(vis)
+    plt.axis("off")
+    plt.show()

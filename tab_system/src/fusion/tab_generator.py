@@ -1,10 +1,12 @@
 from audio.audio_processor import AudioProcessor
 from config import MODEL_PATH
+from geometry.primitives import remove_duplicate_frets
 from utils.audio import delete_audio
 from visual.hand_detection import HandDetector, HandTracker, get_closest_hand
 from visual.visual_processor import VisualProcessor
-from visual.guitar_detector import GuitarDetectionPipeline, GuitarDetector
-from utils.visualization import show_frame, draw_hands, visualize_detections
+from visual.guitar_detector import GuitarDetector
+from geometry.geometry_processor import GeometryProcessor
+from utils.visualization import show_frame, draw_hands, visualize_detections, draw_midstrings
 
 
 class TabGenerator:
@@ -13,11 +15,7 @@ class TabGenerator:
         self.visual_processor = VisualProcessor(video_path)
         self.hand_detector = HandDetector()
         self.guitar_detector = GuitarDetector(MODEL_PATH)
-        '''
-        self.guitar_pipeline = GuitarDetectionPipeline(
-            self.visual_processor,
-            self.fret_detector
-        )'''
+        self.geometry_processor = GeometryProcessor()
 
     def generate(self):
         print(f"[TabGenerator] Generating tabs")
@@ -36,9 +34,6 @@ class TabGenerator:
         hand_data = tracker.track(self.visual_processor.duration)
 
         # --MAIN LOOP--
-        # fret_results = self.guitar_pipeline.process_notes(audio_notes)
-        # print(fret_results)
-        # print(int(input()))
         prev_guitar = None
 
         for note in audio_notes:
@@ -55,12 +50,21 @@ class TabGenerator:
 
             # --GUITAR--
             guitar = self.guitar_detector.detect(raw_frame, time=t)
+            guitar.frets = remove_duplicate_frets(guitar.frets)
 
             # fallback
             if guitar is None or len(guitar.frets) == 0:
                 guitar = prev_guitar
 
             prev_guitar = guitar
+
+            # --GEOMETRY--
+            if guitar is not None and len(guitar.frets) > 0:
+                # строим линии струн через GeometryProcessor
+                midstrings_abc = self.geometry_processor.process(hand['box'], guitar)
+
+                # рисуем межструнные линии
+                frame = draw_midstrings(frame, midstrings_abc)
 
             # --VISUALIZE GUITAR--
             frame = visualize_detections(
