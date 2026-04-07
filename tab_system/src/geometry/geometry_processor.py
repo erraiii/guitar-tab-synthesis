@@ -1,8 +1,7 @@
 import numpy as np
 from .primitives import compute_mean_direction, compute_line_pts, fit_line, frets_to_abc, point_dir_to_abc, \
     sort_frets_right_to_left, sort_strings_bottom_to_top
-from .primitives import (filter_by_hands, remove_duplicate_frets,
-                        align_string_direction)
+from .primitives import filter_by_hands, align_string_direction
 
 class GeometryProcessor:
     """

@@ -1,5 +1,6 @@
 from audio.audio_processor import AudioProcessor
 from config import MODEL_PATH
+from fusion.fingering_processor import FingeringProcessor
 from geometry.primitives import remove_duplicate_frets
 from utils.audio import delete_audio
 from visual.hand_detection import HandDetector, HandTracker, get_closest_hand
@@ -16,6 +17,7 @@ class TabGenerator:
         self.hand_detector = HandDetector()
         self.guitar_detector = GuitarDetector(MODEL_PATH)
         self.geometry_processor = GeometryProcessor()
+        self.fingering_processor = FingeringProcessor()
 
     def generate(self):
         print(f"[TabGenerator] Generating tabs")
@@ -63,6 +65,13 @@ class TabGenerator:
                 # строим линии струн через GeometryProcessor
                 midstrings_abc, fret_lines = self.geometry_processor.process(hand['box'], guitar, frame.shape)
 
+                fingering = self.fingering_processor.detect(
+                    hand["fingertips"],
+                    fret_lines,
+                    midstrings_abc,
+                    t
+                )
+                print(fingering)
                 # рисуем межструнные линии
                 frame = draw_midstrings(frame, midstrings_abc)
                 frame = draw_midstrings(frame, fret_lines)

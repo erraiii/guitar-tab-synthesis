@@ -139,3 +139,8 @@ class GuitarDetections:
 class FingerPosition:
     string: int
     fret: int
+
+@dataclass
+class FingeringFrame:
+    timestamp: float
+    positions: list[FingerPosition]
