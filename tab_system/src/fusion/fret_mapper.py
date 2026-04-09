@@ -67,7 +67,7 @@ class FretboardMapper:
                 if pos[0] == preferred_string:
                     return pos
 
-        return positions[0]  # первая найденная позиция
+        return min(positions, key=lambda x: x[1])
 
 
 def map_event(event, mapper=None):

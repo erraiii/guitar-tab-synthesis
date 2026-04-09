@@ -139,9 +139,8 @@ class TestFretboardMapper:
         """Тест предпочтения недоступной струны"""
         mapper = FretboardMapper()
 
-        # E4 можно сыграть на 1-й струне, но не на 6-й
-        best = mapper.get_best_position(64, preferred_string=6)
-        assert best == (1, 0)  # возвращается первая доступная позиция
+        best = mapper.get_best_position(65, preferred_string=6)
+        assert best == (1, 1)  # возвращается первая доступная позиция
 
 
     def test_no_duplicate_notes_in_string(self):
