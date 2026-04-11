@@ -1,7 +1,9 @@
+from collections import Counter
 from audio.audio_processor import AudioProcessor
 from config import MODEL_PATH
 from fusion.fingering_processor import FingeringProcessor
 from geometry.primitives import remove_duplicate_frets
+from geometry.region import point_to_region
 from utils.audio import delete_audio
 from visual.hand_detection import HandDetector, HandTracker, get_closest_hand
 from visual.visual_processor import VisualProcessor
@@ -37,7 +39,7 @@ class TabGenerator:
 
         # --MAIN LOOP--
         prev_guitar = None
-
+        capo_history = []
         for note in audio_notes:
             t = note.start
             raw_frame = self.visual_processor.get_frame_at(t)
@@ -76,6 +78,19 @@ class TabGenerator:
                 frame = draw_midstrings(frame, midstrings_abc)
                 frame = draw_midstrings(frame, fret_lines)
 
+            capo_fret = None
+
+            if guitar is not None and guitar.capo is not None:
+                capo_center = guitar.capo.center
+
+                _, capo_fret = point_to_region(
+                    capo_center,
+                    fret_lines,
+                    midstrings_abc
+                )
+
+            capo_history.append(capo_fret)
+            
             # --VISUALIZE GUITAR--
             frame = visualize_detections(
                 frame,
@@ -85,6 +100,15 @@ class TabGenerator:
             )
             # --SHOW--
             show_frame(frame)
+
+        valid = [c for c in capo_history if c is not None]
+
+        if valid:
+            final_capo = Counter(valid).most_common(1)[0][0]
+        else:
+            final_capo = None
+
+        print("Final capo position:", final_capo)
 
         self.visual_processor.release()
 
