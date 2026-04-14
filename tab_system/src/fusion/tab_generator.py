@@ -10,6 +10,9 @@ from visual.visual_processor import VisualProcessor
 from visual.guitar_detector import GuitarDetector
 from geometry.geometry_processor import GeometryProcessor
 from utils.visualization import show_frame, draw_hands, visualize_detections, draw_midstrings
+from fusion.fusion_processor import FusionProcessor
+from fusion.fret_mapper import FretboardMapper
+from fusion.candidates import generate_visual_candidates
 
 
 class TabGenerator:
@@ -20,6 +23,8 @@ class TabGenerator:
         self.guitar_detector = GuitarDetector(MODEL_PATH)
         self.geometry_processor = GeometryProcessor()
         self.fingering_processor = FingeringProcessor()
+        self.mapper = FretboardMapper()
+        self.fusion_processor = FusionProcessor(self.mapper)
 
     def generate(self):
         print(f"[TabGenerator] Generating tabs")
@@ -40,6 +45,7 @@ class TabGenerator:
         # --MAIN LOOP--
         prev_guitar = None
         capo_history = []
+        frames_data = []
         for note in audio_notes:
             t = note.start
             raw_frame = self.visual_processor.get_frame_at(t)
@@ -75,8 +81,8 @@ class TabGenerator:
                 )
                 print(fingering)
                 # рисуем межструнные линии
-                frame = draw_midstrings(frame, midstrings_abc)
-                frame = draw_midstrings(frame, fret_lines)
+                # frame = draw_midstrings(frame, midstrings_abc)
+                # frame = draw_midstrings(frame, fret_lines)
 
             capo_fret = None
 
@@ -92,14 +98,21 @@ class TabGenerator:
             capo_history.append(capo_fret)
             
             # --VISUALIZE GUITAR--
+            '''
             frame = visualize_detections(
                 frame,
                 guitar,
                 show=False,
                 return_img=True
-            )
+            )'''
             # --SHOW--
-            show_frame(frame)
+            # show_frame(frame)
+            frames_data.append({
+                "note": note,
+                "fingering": fingering,
+                "fret_lines": fret_lines,
+                "midstrings": midstrings_abc,
+            })
 
         valid = [c for c in capo_history if c is not None]
 
@@ -109,6 +122,25 @@ class TabGenerator:
             final_capo = None
 
         print("Final capo position:", final_capo)
+
+        for data in frames_data:
+            note = data["note"]
+            fingering = data["fingering"]
+
+            # --- визуальные кандидаты ---
+            visual_candidates = generate_visual_candidates(
+                fingering.positions,
+                capo=final_capo
+            )
+
+            # --- fusion ---
+            fused = self.fusion_processor.fuse_event(
+                note,
+                fingering,
+                visual_candidates
+            )
+
+            print("FUSED:", fused)
 
         self.visual_processor.release()
 

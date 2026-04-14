@@ -10,7 +10,9 @@ def generate_visual_candidates(finger_positions, capo=None, num_strings=6):
 
     # собираем ВСЕ лады по струнам
     string_to_frets = {}
-    for s, f in finger_positions:
+    for pos in finger_positions:
+        s = pos.string
+        f = pos.fret
         string_to_frets.setdefault(s, []).append(f)
 
     result = []

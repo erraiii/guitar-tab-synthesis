@@ -68,9 +68,10 @@ def build_events(groups):
 
 
 def process_notes(notes):
+    print(f"  [process_notes] вход: {len(notes)} нот")
     notes = filter_notes_by_len(notes)
     notes = remove_duplicates(notes)
     groups = group_notes(notes)
     events = build_events(groups)
-
+    print(f"  [process_notes] событий: {len(events)}")
     return events

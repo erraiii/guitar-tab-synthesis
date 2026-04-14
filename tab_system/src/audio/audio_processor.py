@@ -26,7 +26,7 @@ class AudioProcessor:
         for note in data["notes"]:
 
             # фильтр по уверенности
-            if note["confidence"] < 0.2:
+            if note["confidence"] < 0.45:
                 continue
 
             audio_notes.append(
