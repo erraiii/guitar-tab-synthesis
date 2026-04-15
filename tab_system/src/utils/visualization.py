@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+from config import EPSILON
 
 
 def show_frame(frame, title: str = "Frame"):
@@ -90,7 +91,7 @@ def draw_midstrings(img, midstrings_abc):
     h, w = img.shape[:2]
 
     for a, b, c in midstrings_abc:
-        if abs(b) < 1e-6:  # вертикальная линия
+        if abs(b) < EPSILON:  # вертикальная линия
             x = int(-c / a)
             p1 = (x, 0)
             p2 = (x, h-1)

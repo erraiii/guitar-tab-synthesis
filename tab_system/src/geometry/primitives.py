@@ -1,7 +1,10 @@
 import numpy as np
+from config import FRET_IOU_THRESHOLD, FRET_HORIZONTAL_OVERLAP, STRING_OUTER_GAP_RATIO, EPSILON
 
 
-def remove_duplicate_frets(frets, iou_threshold=0.9):
+def remove_duplicate_frets(frets, iou_threshold=None):
+    if iou_threshold is None:
+        iou_threshold = FRET_IOU_THRESHOLD
 
     def iou(boxA, boxB):
 
@@ -77,7 +80,7 @@ def filter_by_hands(frets, hand_boxes):
             # 2. проверка по горизонтали (ось X)
             overlap_x = max(0, min(fret_bbox[2], hand_box[2]) - max(fret_bbox[0], hand_box[0]))
             fret_width = fret_bbox[2] - fret_bbox[0]
-            if overlap_x / fret_width > 0.2:
+            if overlap_x / fret_width > FRET_HORIZONTAL_OVERLAP:
                 intersects = True
                 break
 
@@ -107,20 +110,22 @@ def align_string_direction(frets):
     return frets
 
 
-def compute_line_pts(line_pts, outer_gap_ratio=0.18):
+def compute_line_pts(line_pts, outer_gap_ratio=None):
     """
     line_pts: np.array([[x1,y1],[x2,y2]])
 
     returns:
         (7,2) numpy array
     """
+    if outer_gap_ratio is None:
+        outer_gap_ratio = STRING_OUTER_GAP_RATIO
 
     p1, p2 = line_pts
 
     direction = p2 - p1
     length = np.linalg.norm(direction)
 
-    if length < 1e-6:
+    if length < EPSILON:
         return None
 
     direction = direction / length
@@ -220,7 +225,7 @@ def frets_to_abc(frets, mean_dir):
         d = p2 - p1
 
         norm = np.linalg.norm(d)
-        if norm < 1e-6:
+        if norm < EPSILON:
             continue
 
         d = d / norm
@@ -254,7 +259,7 @@ def point_dir_to_abc(point, direction):
     d = np.array(direction)
 
     norm = np.linalg.norm(d)
-    if norm < 1e-6:
+    if norm < EPSILON:
         return None
 
     d = d / norm

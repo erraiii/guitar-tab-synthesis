@@ -1,4 +1,4 @@
-from config import STANDARD_TUNING
+from config import STANDARD_TUNING, MAX_FRETS
 
 
 class FretboardMapper:
@@ -25,7 +25,7 @@ class FretboardMapper:
             # Номер струны для пользователя (1 = самая верхняя, 6 = самая нижняя)
             string_number = self.num_strings - string_idx
 
-            for fret in range(25):  # 0-24 лады
+            for fret in range(MAX_FRETS):  # 0-24 лады
                 midi_note = open_note + fret
 
                 if 0 <= midi_note <= 127:

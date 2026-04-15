@@ -1,16 +1,19 @@
+from config import TAB_MAX_COLS
+
 STANDARD_TUNING_NAMES = ["E", "B", "G", "D", "A", "E"]  # 1 → 6
+NUM_STRINGS = 6
 
 
 class TabBuilder:
-    def __init__(self, capo=None, max_cols=40):
+    def __init__(self, capo=None, max_cols=None):
         self.capo = capo or 0
-        self.max_cols = max_cols
+        self.max_cols = max_cols if max_cols is not None else TAB_MAX_COLS
 
         # 6 струн
-        self.strings = [[] for _ in range(6)]
+        self.strings = [[] for _ in range(NUM_STRINGS)]
 
     def _empty_column(self):
-        return ["-" for _ in range(6)]
+        return ["-" for _ in range(NUM_STRINGS)]
 
     def add_event(self, fused_positions):
         """
@@ -30,7 +33,7 @@ class TabBuilder:
         # выравнивание по ширине (чтобы 10 не ломал таб)
         width = max(len(x) for x in column)
 
-        for i in range(6):
+        for i in range(NUM_STRINGS):
             val = column[i]
             if val == "-":
                 column[i] = "-" * width
@@ -38,10 +41,10 @@ class TabBuilder:
                 column[i] = val.rjust(width, "-")
 
         # добавляем в струны
-        for i in range(6):
+        for i in range(NUM_STRINGS):
             self.strings[i].append(column[i])
 
-        for i in range(6):
+        for i in range(NUM_STRINGS):
             self.strings[i].append("---")
 
     def render(self):

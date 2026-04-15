@@ -1,4 +1,4 @@
-from config import HAND_MODEL_PATH, HAND_MODEL_URL, MAX_HANDS
+from config import HAND_MODEL_PATH, HAND_MODEL_URL, MAX_HANDS, HAND_TRACKING_STEP, HAND_BOX_PADDING
 from utils.download import download_if_missing
 import mediapipe as mp
 from mediapipe.tasks import python
@@ -45,7 +45,7 @@ class HandTracker:
         results = []
 
         frame_idx = 0
-        frame_step = 2  # каждый второй кадр
+        frame_step = HAND_TRACKING_STEP  # каждый N-й кадр
 
         total_frames = int(self.vp.cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -107,10 +107,12 @@ def extract_fingertips(hand_landmarks, img_shape):
     return fingertips
 
 
-def landmarks_to_boxes(hand_landmarks, img_shape, padding=0.1):
+def landmarks_to_boxes(hand_landmarks, img_shape, padding=None):
     """
     Преобразует landmarks в bounding boxes
     """
+    if padding is None:
+        padding = HAND_BOX_PADDING
 
     h, w = img_shape[:2]
 

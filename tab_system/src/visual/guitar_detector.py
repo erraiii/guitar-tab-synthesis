@@ -1,11 +1,12 @@
 from ultralytics import YOLO
+from config import GUITAR_DETECT_CONFIDENCE
 from utils.parsing import parse_guitar_detections
 
 
 class GuitarDetector:
-    def __init__(self, model_path: str, conf: float = 0.2):
+    def __init__(self, model_path: str, conf: float = None):
         self.model = YOLO(model_path)
-        self.conf = conf
+        self.conf = conf if conf is not None else GUITAR_DETECT_CONFIDENCE
         self.class_names = self.model.names
 
     def detect(self, image, time=None):

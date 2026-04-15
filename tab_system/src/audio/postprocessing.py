@@ -1,8 +1,9 @@
-from core.models import AudioNote, AudioEvent #, Note
+from config import AUDIO_MIN_NOTE_DURATION, AUDIO_DUPLICATE_WINDOW, AUDIO_GROUPING_THRESHOLD
+from core.models import AudioNote, AudioEvent
 
 
 def filter_notes_by_len(notes):
-    return [n for n in notes if (n.end - n.start) > 0.05] # короткие убрать
+    return [n for n in notes if (n.end - n.start) > AUDIO_MIN_NOTE_DURATION]
 
 
 def remove_duplicates(notes):
@@ -13,8 +14,8 @@ def remove_duplicates(notes):
 
         for r in result:
             if (
-                abs(note.start - r.start) < 0.02
-                and note.pitch == r.pitch # note.notes[0].midi == r.notes[0].midi
+                abs(note.start - r.start) < AUDIO_DUPLICATE_WINDOW
+                and note.pitch == r.pitch
             ):
                 duplicate = True
                 break
@@ -31,14 +32,12 @@ def group_notes(notes):
     events = []
     current = []
 
-    threshold = 0.05
-
     for note in notes:
         if not current:
             current.append(note)
             continue
 
-        if abs(note.start - current[0].start) < threshold:
+        if abs(note.start - current[0].start) < AUDIO_GROUPING_THRESHOLD:
             current.append(note)
         else:
             events.append(current)

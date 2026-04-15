@@ -1,4 +1,5 @@
 import numpy as np
+from config import FUSION_PERFECT_SCORE, FUSION_UNSEEN_PENALTY
 
 
 class FusionProcessor:
@@ -39,7 +40,7 @@ class FusionProcessor:
 
         # идеальное совпадение
         if pos in visual_candidates:
-            return 100
+            return FUSION_PERFECT_SCORE
 
         penalties = []
 
@@ -51,7 +52,7 @@ class FusionProcessor:
             return -min(penalties)
 
         # если струна вообще не наблюдалась
-        return -10
+        return FUSION_UNSEEN_PENALTY
 
     # --- 4. FUSE ДЛЯ СОБЫТИЯ ---
     def fuse_event(self, event, fingering, visual_candidates):

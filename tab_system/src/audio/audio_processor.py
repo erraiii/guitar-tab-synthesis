@@ -1,5 +1,7 @@
 import requests
-from core.models import AudioNote #, Note
+from requests.exceptions import RequestException, Timeout
+from config import AUDIO_SERVICE_URL, AUDIO_SERVICE_TIMEOUT, AUDIO_CONFIDENCE_THRESHOLD
+from core.models import AudioNote
 from audio.postprocessing import process_notes
 
 
@@ -10,23 +12,50 @@ class AudioProcessor:
     def process(self, audio_path: str):
         print(f"[AudioProcessor] process {audio_path}")
 
-        # отправляем аудио в контейнер
-        with open(audio_path, "rb") as f:
-            response = requests.post(
-                "http://localhost:8000/predict",
-                files={"file": f}
+        try:
+            with open(audio_path, "rb") as f:
+                response = requests.post(
+                    AUDIO_SERVICE_URL,
+                    files={"file": f},
+                    timeout=AUDIO_SERVICE_TIMEOUT
+                )
+        except ConnectionError:
+            raise RuntimeError(
+                f"Cannot connect to audio service at {AUDIO_SERVICE_URL}. "
+                f"Is the server running?"
+            )
+        except Timeout:
+            raise RuntimeError(
+                f"Audio service at {AUDIO_SERVICE_URL} timed out "
+                f"after {AUDIO_SERVICE_TIMEOUT}s"
+            )
+        except RequestException as e:
+            raise RuntimeError(
+                f"Failed to communicate with audio service: {e}"
             )
 
-        # получаем JSON
-        data = response.json()
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Audio service returned HTTP {response.status_code}: "
+                f"{response.text[:200]}"
+            )
+
+        try:
+            data = response.json()
+        except ValueError as e:
+            raise RuntimeError(
+                f"Audio service returned invalid JSON: {e}"
+            )
+
+        if "notes" not in data:
+            raise RuntimeError(
+                f"Unexpected audio service response: missing 'notes' field"
+            )
 
         audio_notes = []
 
-        # преобразуем JSON в AudioNote
         for note in data["notes"]:
-
-            # фильтр по уверенности
-            if note["confidence"] < 0.45:
+            if note.get("confidence", 0) < AUDIO_CONFIDENCE_THRESHOLD:
                 continue
 
             audio_notes.append(
