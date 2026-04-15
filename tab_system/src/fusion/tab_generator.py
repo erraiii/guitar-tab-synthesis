@@ -1,6 +1,7 @@
 from collections import Counter
 from audio.audio_processor import AudioProcessor
 from config import MODEL_PATH
+from core.tab_builder import TabBuilder
 from fusion.fingering_processor import FingeringProcessor
 from geometry.primitives import remove_duplicate_frets
 from geometry.region import point_to_region
@@ -121,8 +122,6 @@ class TabGenerator:
         else:
             final_capo = None
 
-        print("Final capo position:", final_capo)
-
         for data in frames_data:
             note = data["note"]
             fingering = data["fingering"]
@@ -140,7 +139,15 @@ class TabGenerator:
                 visual_candidates
             )
 
-            print("FUSED:", fused)
+            # print("FUSED:", fused)
+            data["fused"] = fused
+
+        tab_builder = TabBuilder(capo=final_capo)
+
+        for data in frames_data:
+            tab_builder.add_event(data["fused"])
+
+        print(tab_builder.render_chunked())
 
         self.visual_processor.release()
 

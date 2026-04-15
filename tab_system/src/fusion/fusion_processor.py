@@ -81,11 +81,45 @@ class FusionProcessor:
 
     # --- 4. FUSE ДЛЯ СОБЫТИЯ ---
     def fuse_event(self, event, fingering, visual_candidates):
-        result = []
+        """
+        Теперь учитывает, что струна может быть использована только один раз
+        """
 
-        for i, note in enumerate(event.notes):
-            pos = self.fuse_note(note, fingering, visual_candidates)
-            if pos is not None:
-                result.append(pos)
+        candidates = []
+
+        # 1. собираем все кандидаты
+        for note_idx, note in enumerate(event.notes):
+            audio_positions = self.mapper.get_positions(note.pitch)
+
+            filtered = self._filter_by_hand(audio_positions, fingering)
+            if not filtered:
+                filtered = audio_positions
+
+            for pos in filtered:
+                score = self._score_position(pos, visual_candidates)
+                candidates.append((score, note_idx, pos))
+
+        # 2. сортируем по убыванию score
+        candidates.sort(reverse=True, key=lambda x: x[0])
+
+        used_strings = set()
+        used_notes = set()
+        result = [None] * len(event.notes)
+
+        # 3. жадное назначение
+        for score, note_idx, pos in candidates:
+            string, fret = pos
+
+            if note_idx in used_notes:
+                continue
+            if string in used_strings:
+                continue
+
+            result[note_idx] = pos
+            used_notes.add(note_idx)
+            used_strings.add(string)
+
+        # 4. удаляем None (если не удалось назначить)
+        result = [r for r in result if r is not None]
 
         return result
