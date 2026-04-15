@@ -6,21 +6,21 @@ from fusion.fingering_processor import FingeringProcessor
 from geometry.primitives import remove_duplicate_frets
 from geometry.region import point_to_region
 from utils.audio import delete_audio
-from visual.hand_detection import HandDetector, HandTracker, get_closest_hand
+from visual.hand_detection import HandTracker, get_closest_hand
 from visual.visual_processor import VisualProcessor
 from visual.guitar_detector import GuitarDetector
 from geometry.geometry_processor import GeometryProcessor
-from utils.visualization import show_frame, draw_hands, visualize_detections, draw_midstrings
+from utils.visualization import draw_hands
 from fusion.fusion_processor import FusionProcessor
 from fusion.fret_mapper import FretboardMapper
 from fusion.candidates import generate_visual_candidates
+from config import PROJECT_ROOT
 
 
 class TabGenerator:
     def __init__(self, video_path: str):
         self.audio_processor = AudioProcessor()
         self.visual_processor = VisualProcessor(video_path)
-        self.hand_detector = HandDetector()
         self.guitar_detector = GuitarDetector(MODEL_PATH)
         self.geometry_processor = GeometryProcessor()
         self.fingering_processor = FingeringProcessor()
@@ -34,7 +34,7 @@ class TabGenerator:
         print("[VisualProcessor] extract audio")
         audio_path = self.visual_processor.extract_audio()
         try:
-            audio_notes = self.audio_processor.process(audio_path)
+            audio_events = self.audio_processor.process(audio_path)
         finally:
             print("[TabGenerator] delete audio")
             delete_audio(audio_path)
@@ -47,8 +47,8 @@ class TabGenerator:
         prev_guitar = None
         capo_history = []
         frames_data = []
-        for note in audio_notes:
-            t = note.start
+        for event in audio_events:
+            t = event.start
             raw_frame = self.visual_processor.get_frame_at(t)
             if raw_frame is None:
                 continue
@@ -71,19 +71,24 @@ class TabGenerator:
 
             # --GEOMETRY--
             if guitar is not None and len(guitar.frets) > 0:
-                # строим линии струн через GeometryProcessor
-                midstrings_abc, fret_lines = self.geometry_processor.process(hand['box'], guitar, frame.shape)
+                # строим линии струн через GeometryProcessor (рука может быть None)
+                midstrings_abc, fret_lines = self.geometry_processor.process(hand['box'] if hand else None, guitar, frame.shape)
 
-                fingering = self.fingering_processor.detect(
-                    hand["fingertips"],
-                    fret_lines,
-                    midstrings_abc,
-                    t
-                )
-                print(fingering)
-                # рисуем межструнные линии
-                # frame = draw_midstrings(frame, midstrings_abc)
-                # frame = draw_midstrings(frame, fret_lines)
+                if hand is not None:
+                    fingering = self.fingering_processor.detect(
+                        hand["fingertips"],
+                        fret_lines,
+                        midstrings_abc,
+                        t
+                    )
+                    print(fingering)
+                else:
+                    fingering = None
+            else:
+                # гитара не обнаружена — ничего не строим
+                fingering = None
+                fret_lines = []
+                midstrings_abc = []
 
             capo_fret = None
 
@@ -97,19 +102,9 @@ class TabGenerator:
                 )
 
             capo_history.append(capo_fret)
-            
-            # --VISUALIZE GUITAR--
-            '''
-            frame = visualize_detections(
-                frame,
-                guitar,
-                show=False,
-                return_img=True
-            )'''
-            # --SHOW--
-            # show_frame(frame)
+
             frames_data.append({
-                "note": note,
+                "note": event,
                 "fingering": fingering,
                 "fret_lines": fret_lines,
                 "midstrings": midstrings_abc,
@@ -139,7 +134,6 @@ class TabGenerator:
                 visual_candidates
             )
 
-            # print("FUSED:", fused)
             data["fused"] = fused
 
         tab_builder = TabBuilder(capo=final_capo)
@@ -147,7 +141,13 @@ class TabGenerator:
         for data in frames_data:
             tab_builder.add_event(data["fused"])
 
-        print(tab_builder.render_chunked())
+        # Write tabs to output file
+        output_dir = PROJECT_ROOT / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / "tabs.txt"
+        tabs_content = tab_builder.render_chunked()
+        output_path.write_text(tabs_content, encoding="utf-8")
+        print(f"[TabGenerator] Tabs saved to {output_path}")
 
         self.visual_processor.release()
 

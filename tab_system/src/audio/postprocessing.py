@@ -60,7 +60,7 @@ def build_events(groups):
             AudioEvent(
                 start=min(n.start for n in group),
                 end=max(n.end for n in group),
-                notes=group # notes
+                notes=group
             )
         )
 

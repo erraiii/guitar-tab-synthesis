@@ -53,32 +53,6 @@ class FusionProcessor:
         # если струна вообще не наблюдалась
         return -10
 
-    # --- 3. FUSE ДЛЯ ОДНОЙ НОТЫ ---
-    def fuse_note(self, note, fingering, visual_candidates):
-        """
-        note.midi -> (string, fret)
-        """
-
-        # 1. аудио кандидаты
-        audio_positions = self.mapper.get_positions(note.pitch)
-
-        if not audio_positions:
-            return None
-
-        # 2. фильтрация по руке
-        filtered = self._filter_by_hand(audio_positions, fingering)
-
-        if not filtered:
-            filtered = audio_positions  # fallback
-
-        # 3. выбираем лучший по скорингу
-        best = max(
-            filtered,
-            key=lambda pos: self._score_position(pos, visual_candidates)
-        )
-
-        return best
-
     # --- 4. FUSE ДЛЯ СОБЫТИЯ ---
     def fuse_event(self, event, fingering, visual_candidates):
         """

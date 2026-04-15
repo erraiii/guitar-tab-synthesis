@@ -14,7 +14,6 @@ MAX_HANDS = 2
 
 
 VIDEO_PATH = "C:/Users/aivan/Downloads/oceans.mp4"
-# "C:/Users/aivan/Downloads/blue_test_short.mp4"
 
 
 STANDARD_TUNING = [

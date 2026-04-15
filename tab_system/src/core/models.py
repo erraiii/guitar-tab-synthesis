@@ -2,12 +2,6 @@ from dataclasses import dataclass
 from typing import List, Optional
 import numpy as np
 
-'''
-@dataclass
-class Note:
-    midi: int
-    # frequency: float
-'''
 
 @dataclass
 class AudioNote:

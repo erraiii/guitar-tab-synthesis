@@ -35,11 +35,3 @@ class VisualProcessor:
 
     def extract_audio(self, output_path=None):
         return extract_audio(self.video_path, output_path)
-
-    def process(self, frame):
-        """
-        Принимает кадр
-        Возвращает VisualResult
-        """
-        print("[VisualProcessor] process frame")
-        return None

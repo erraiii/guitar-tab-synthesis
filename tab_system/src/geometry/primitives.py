@@ -52,7 +52,11 @@ def remove_duplicate_frets(frets, iou_threshold=0.9):
 
 
 def filter_by_hands(frets, hand_boxes):
-    if hand_boxes and not isinstance(hand_boxes[0], (list, tuple)):
+    # Если руки нет — все порожки считаем активными
+    if hand_boxes is None:
+        return list(frets), []
+
+    if not isinstance(hand_boxes[0], (list, tuple)):
         hand_boxes = [hand_boxes]
 
     filtered = []

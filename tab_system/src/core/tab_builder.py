@@ -87,5 +87,3 @@ class TabBuilder:
         result.append("\n\n".join(chunks))
 
         return "\n".join(result)
-
-        # return "\n\n".join(chunks)
