@@ -12,18 +12,7 @@ HAND_MODEL_URL = (
 
 MAX_HANDS = 2
 
-
 VIDEO_PATH = "C:/Users/aivan/Downloads/oceans.mp4"
-
-
-STANDARD_TUNING = [
-    40,  # E2
-    45,  # A2
-    50,  # D3
-    55,  # G3
-    59,  # B3
-    64,  # E4
-]
 
 AUDIO_SERVICE_URL = "http://localhost:8000/predict"
 AUDIO_SERVICE_TIMEOUT = 60
@@ -51,3 +40,12 @@ FUSION_UNSEEN_PENALTY = -10
 EPSILON = 1e-6
 
 MODEL_PATH = MODELS_DIR / "guitar_model.pt"
+
+STANDARD_TUNING = [
+    40,  # E2
+    45,  # A2
+    50,  # D3
+    55,  # G3
+    59,  # B3
+    64,  # E4
+]

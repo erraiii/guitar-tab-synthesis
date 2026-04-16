@@ -1,7 +1,7 @@
 from collections import Counter
 from audio.audio_processor import AudioProcessor
 from config import MODEL_PATH
-from core.tab_builder import TabBuilder
+from core.tab_builder import TabBuilder, save_tabs_pdf
 from fusion.fingering_processor import FingeringProcessor
 from geometry.primitives import remove_duplicate_frets
 from geometry.region import point_to_region
@@ -30,124 +30,163 @@ class TabGenerator:
     def generate(self):
         print(f"[TabGenerator] Generating tabs")
 
-        # --AUDIO--
-        print("[VisualProcessor] extract audio")
+        audio_events = self._extract_audio_events()
+        hand_data = self._track_hands()
+        frames_data = self._build_frames_data(audio_events, hand_data)
+
+        final_capo = self._resolve_capo(frames_data)
+        self._fuse_audio_visual(frames_data, final_capo)
+
+        tabs_content = self._render_tabs(frames_data, final_capo)
+        self.visual_processor.release()
+
+        return tabs_content
+
+    def _extract_audio_events(self):
+        print("[TabGenerator] extracting audio events")
         audio_path = self.visual_processor.extract_audio()
+
         try:
-            audio_events = self.audio_processor.process(audio_path)
+            return self.audio_processor.process(audio_path)
         finally:
-            print("[TabGenerator] delete audio")
+            print("[TabGenerator] deleting audio")
             delete_audio(audio_path)
 
-        # --HANDS--
+    def _track_hands(self):
+        print("[TabGenerator] tracking hands")
         tracker = HandTracker(self.visual_processor)
-        hand_data = tracker.track(self.visual_processor.duration)
+        return tracker.track(self.visual_processor.duration)
 
-        # --MAIN LOOP--
-        prev_guitar = None
-        capo_history = []
+    def _build_frames_data(self, audio_events, hand_data):
         frames_data = []
+        prev_guitar = None
+
         for event in audio_events:
-            t = event.start
-            raw_frame = self.visual_processor.get_frame_at(t)
-            if raw_frame is None:
+            try:
+                frame_data = self._process_event(event, hand_data, prev_guitar)
+                if frame_data is None:
+                    continue
+
+                prev_guitar = frame_data["guitar"] or prev_guitar
+                frames_data.append(frame_data)
+            except Exception as e:
+                print(f"[TabGenerator] skip event at {event.start:.3f}s: {e}")
                 continue
 
-            frame = raw_frame.copy()
-            # --HAND--
-            hand = get_closest_hand(hand_data, t)
-            if hand is not None:
-                frame = draw_hands(frame, hand["box"], hand["fingertips"])
+        return frames_data
 
-            # --GUITAR--
-            guitar = self.guitar_detector.detect(raw_frame, time=t)
+    def _process_event(self, event, hand_data, prev_guitar):
+        t = event.start
+        raw_frame = self.visual_processor.get_frame_at(t)
+        if raw_frame is None:
+            return None
+
+        hand = get_closest_hand(hand_data, t)
+        # frame = raw_frame.copy()
+        # if hand is not None:
+        #     frame = draw_hands(frame, hand["box"], hand["fingertips"])
+
+        guitar = self.guitar_detector.detect(raw_frame, time=t)
+        if guitar is not None:
             guitar.frets = remove_duplicate_frets(guitar.frets)
 
-            # fallback
-            if guitar is None or len(guitar.frets) == 0:
-                guitar = prev_guitar
+        if guitar is None or len(guitar.frets) == 0:
+            guitar = prev_guitar
 
-            prev_guitar = guitar
+        if guitar is not None and len(guitar.frets) > 0:
+            geometry_result = self.geometry_processor.process(
+                hand["box"] if hand else None,
+                guitar,
+                raw_frame.shape
+            )
 
-            # --GEOMETRY--
-            if guitar is not None and len(guitar.frets) > 0:
-                # строим линии струн через GeometryProcessor (рука может быть None)
-                midstrings_abc, fret_lines = self.geometry_processor.process(hand['box'] if hand else None, guitar, frame.shape)
+            if geometry_result is None:
+                print(f"[TabGenerator] geometry processing failed at {t:.3f}s")
+                string_lines = []
+                fret_lines = []
+            else:
+                string_lines, fret_lines = geometry_result
 
-                if hand is not None:
+            fingering = None
+            if hand is not None and fret_lines and string_lines:
+                try:
                     fingering = self.fingering_processor.detect(
                         hand["fingertips"],
                         fret_lines,
-                        midstrings_abc,
+                        string_lines,
                         t
                     )
-                    print(fingering)
-                else:
+                except Exception as e:
+                    print(f"[TabGenerator] fingering detection failed at {t:.3f}s: {e}")
                     fingering = None
-            else:
-                # гитара не обнаружена — ничего не строим
-                fingering = None
-                fret_lines = []
-                midstrings_abc = []
 
             capo_fret = None
-
-            if guitar is not None and guitar.capo is not None:
-                capo_center = guitar.capo.center
-
-                _, capo_fret = point_to_region(
-                    capo_center,
-                    fret_lines,
-                    midstrings_abc
-                )
-
-            capo_history.append(capo_fret)
-
-            frames_data.append({
-                "note": event,
-                "fingering": fingering,
-                "fret_lines": fret_lines,
-                "midstrings": midstrings_abc,
-            })
-
-        valid = [c for c in capo_history if c is not None]
-
-        if valid:
-            final_capo = Counter(valid).most_common(1)[0][0]
+            if guitar.capo is not None and fret_lines and string_lines:
+                try:
+                    capo_region = point_to_region(
+                        guitar.capo.center,
+                        fret_lines,
+                        string_lines
+                    )
+                    if capo_region is not None:
+                        _, capo_fret = capo_region
+                except Exception as e:
+                    print(f"[TabGenerator] capo detection failed at {t:.3f}s: {e}")
+                    capo_fret = None
         else:
-            final_capo = None
+            string_lines = []
+            fret_lines = []
+            fingering = None
+            capo_fret = None
 
-        for data in frames_data:
-            note = data["note"]
-            fingering = data["fingering"]
+        return {
+            "note": event,
+            "guitar": guitar,
+            "hand": hand,
+            "fingering": fingering,
+            "string_lines": string_lines,
+            "fret_lines": fret_lines,
+            "capo_fret": capo_fret,
+        }
 
-            # --- визуальные кандидаты ---
+    def _resolve_capo(self, frames_data):
+        capo_values = [item["capo_fret"] for item in frames_data if item["capo_fret"] is not None]
+        if not capo_values:
+            return None
+        return Counter(capo_values).most_common(1)[0][0]
+
+    def _fuse_audio_visual(self, frames_data, final_capo):
+        for item in frames_data:
+            touch_positions = item["fingering"].positions if item["fingering"] is not None else []
             visual_candidates = generate_visual_candidates(
-                fingering.positions,
+                touch_positions,
                 capo=final_capo
             )
 
-            # --- fusion ---
-            fused = self.fusion_processor.fuse_event(
-                note,
-                fingering,
+            item["fused"] = self.fusion_processor.fuse_event(
+                item["note"],
+                item["fingering"],
                 visual_candidates
             )
 
-            data["fused"] = fused
+    def _render_tabs(self, frames_data, final_capo):
+        builder = TabBuilder(capo=final_capo)
+        for item in frames_data:
+            builder.add_event(item.get("fused", []))
 
-        tab_builder = TabBuilder(capo=final_capo)
+        tabs_content = builder.render_chunked()
 
-        for data in frames_data:
-            tab_builder.add_event(data["fused"])
-
-        # Write tabs to output file
         output_dir = PROJECT_ROOT / "output"
         output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / "tabs.txt"
-        tabs_content = tab_builder.render_chunked()
-        output_path.write_text(tabs_content, encoding="utf-8")
-        print(f"[TabGenerator] Tabs saved to {output_path}")
 
-        self.visual_processor.release()
+        output_path = output_dir / "tabs.txt"
+        output_pdf_path = output_dir / "tabs.pdf"
+
+        output_path.write_text(tabs_content, encoding="utf-8")
+        save_tabs_pdf(tabs_content, output_pdf_path)
+
+        print(f"[TabGenerator] Tabs saved to {output_path}")
+        print(f"[TabGenerator] Tabs saved to {output_pdf_path}")
+
+        return tabs_content
 

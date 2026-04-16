@@ -19,7 +19,17 @@ def extract_audio(video_path: str, output_path: str = None):
         output_path
     ]
 
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        subprocess.run(
+            command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("ffmpeg не найден в PATH") from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"ffmpeg завершился с ошибкой: {exc.returncode}") from exc
 
     return output_path
 
@@ -30,4 +40,4 @@ def delete_audio(path: str):
             os.remove(path)
             print(f"[delete_audio] removed {path}")
         except Exception as e:
-            print(f"[delete_audio] error: {e}")
+            print(f"[delete_audio] failed to remove {path} ({type(e).__name__}): {e}")

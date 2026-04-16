@@ -13,10 +13,15 @@ class GeometryProcessor:
     """
 
     def process(self, hand, guitar_det, shape):
+        if guitar_det is None or not guitar_det.frets:
+            return [], []
 
         frets = guitar_det.frets
         # 1. фильтрация по руке
         active_frets, rejected_frets = filter_by_hands(frets, hand)
+
+        if len(active_frets) < 2:
+            return [], []
 
         # 2. одно направление
         fret_lines = align_string_direction(active_frets)
@@ -43,7 +48,8 @@ class GeometryProcessor:
         fret_regions = frets_to_abc(active_frets, angle)
 
         # 7.2 линии отфильтрованных порожков и верхнего порожка
-        rejected_frets = rejected_frets + [guitar_det.nut]
+        if guitar_det.nut is not None:
+            rejected_frets = rejected_frets + [guitar_det.nut]
         fret_reg_rej = [point_dir_to_abc(fret.center, angle) for fret in rejected_frets]
 
         fret_regions.extend(fret_reg_rej)

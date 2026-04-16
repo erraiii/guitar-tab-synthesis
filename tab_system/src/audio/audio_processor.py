@@ -19,11 +19,12 @@ class AudioProcessor:
                     files={"file": f},
                     timeout=AUDIO_SERVICE_TIMEOUT
                 )
-        except ConnectionError:
+
+        except requests.exceptions.ConnectionError:
             raise RuntimeError(
                 f"Cannot connect to audio service at {AUDIO_SERVICE_URL}. "
                 f"Is the server running?"
-            )
+            ) from None
         except Timeout:
             raise RuntimeError(
                 f"Audio service at {AUDIO_SERVICE_URL} timed out "

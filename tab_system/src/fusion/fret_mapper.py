@@ -68,25 +68,3 @@ class FretboardMapper:
                     return pos
 
         return min(positions, key=lambda x: x[1])
-
-
-def map_event(event, mapper=None):
-    """
-    Маппинг события (ноты) в позиции на грифе
-
-    Args:
-        event: событие с атрибутом notes (список нот)
-        mapper: экземпляр FretboardMapper (если None, создаётся новый со стандартным строем)
-
-    Returns:
-        список позиций для каждой ноты в событии
-    """
-    if mapper is None:
-        mapper = FretboardMapper()
-
-    result = []
-    for note in event.notes:
-        positions = mapper.get_positions(note.midi)
-        result.append(positions)
-
-    return result

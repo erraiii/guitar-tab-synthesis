@@ -1,19 +1,5 @@
 # test_fretboard_mapper.py
-from fusion.fret_mapper import FretboardMapper, STANDARD_TUNING, map_event
-
-
-class MockNote:
-    """Мок-класс для ноты"""
-
-    def __init__(self, midi):
-        self.midi = midi
-
-
-class MockEvent:
-    """Мок-класс для события"""
-
-    def __init__(self, midi_notes):
-        self.notes = [MockNote(midi) for midi in midi_notes]
+from fusion.fret_mapper import FretboardMapper, STANDARD_TUNING
 
 
 class TestFretboardMapper:
@@ -155,44 +141,6 @@ class TestFretboardMapper:
                     # Одна и та же нота не должна встречаться дважды на одной струне
                     assert midi_note not in seen_notes
                     seen_notes.add(midi_note)
-
-
-class TestMapEvent:
-    """Тесты для функции map_event"""
-
-    def test_map_event_with_default_mapper(self):
-        """Тест маппинга события с маппером по умолчанию"""
-        event = MockEvent([40, 45, 64])
-        result = map_event(event)
-
-        assert len(result) == 3
-        assert (6, 0) in result[0]
-        assert (5, 0) in result[1]
-        assert (1, 0) in result[2]
-
-
-    def test_map_event_with_custom_mapper(self):
-        """Тест маппинга события с кастомным маппером"""
-        custom_tuning = [38, 45, 50, 55, 59, 64]  # Drop D
-        mapper = FretboardMapper(custom_tuning)
-        event = MockEvent([38])  # D2 в Drop D строе
-
-        result = map_event(event, mapper)
-        assert (6, 0) in result[0]  # открытая 6-я струна
-
-    def test_map_event_empty_event(self):
-        """Тест маппинга пустого события"""
-        event = MockEvent([])
-        result = map_event(event)
-        assert result == []
-
-    def test_map_event_with_notes_not_on_guitar(self):
-        """Тест маппинга нот, которых нет на гитаре"""
-        event = MockEvent([10, 20, 30])
-        result = map_event(event)
-
-        for positions in result:
-            assert positions == []  # все возвращают пустые списки
 
 # Запуск тестов:
 # pytest test_fret_mapper.py -v

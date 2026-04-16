@@ -8,6 +8,9 @@ def generate_visual_candidates(finger_positions, capo=None, num_strings=6):
 
     open_fret = capo if capo is not None else 0
 
+    if not finger_positions:
+        finger_positions = []
+
     # собираем ВСЕ лады по струнам
     string_to_frets = {}
     for pos in finger_positions:

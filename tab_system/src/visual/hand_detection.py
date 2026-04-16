@@ -142,4 +142,7 @@ def landmarks_to_boxes(hand_landmarks, img_shape, padding=None):
 
 
 def get_closest_hand(hand_data, note_time):
+    if not hand_data:
+        return None
+
     return min(hand_data, key=lambda x: abs(x["time"] - note_time))

@@ -1,4 +1,6 @@
 from config import TAB_MAX_COLS
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 STANDARD_TUNING_NAMES = ["E", "B", "G", "D", "A", "E"]  # 1 → 6
 NUM_STRINGS = 6
@@ -90,3 +92,32 @@ class TabBuilder:
         result.append("\n\n".join(chunks))
 
         return "\n".join(result)
+
+
+def save_tabs_pdf(content: str, output_path, lines_per_page: int = 60):
+    """
+    Сохраняет табулатуру в PDF в моноширинном виде.
+    """
+    lines = content.splitlines()
+    pages = max(1, (len(lines) + lines_per_page - 1) // lines_per_page)
+
+    with PdfPages(output_path) as pdf:
+        for page_idx in range(pages):
+            start = page_idx * lines_per_page
+            end = start + lines_per_page
+            chunk = lines[start:end]
+            page_text = "\n".join(chunk)
+
+            fig = plt.figure(figsize=(8.27, 11.69))  # A4 portrait
+            fig.text(
+                0.05,
+                0.98,
+                page_text,
+                va="top",
+                ha="left",
+                family="monospace",
+                fontsize=8
+            )
+            plt.axis("off")
+            pdf.savefig(fig, bbox_inches="tight")
+            plt.close(fig)

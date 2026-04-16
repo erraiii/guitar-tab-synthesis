@@ -1,4 +1,3 @@
-import numpy as np
 from config import FUSION_PERFECT_SCORE, FUSION_UNSEEN_PENALTY
 
 
@@ -13,7 +12,7 @@ class FusionProcessor:
         - открытые струны
         - лады в окрестности руки
         """
-        if not fingering:
+        if not fingering or not fingering.positions:
             return audio_positions
 
         # frets = [f for _, f in fingering]

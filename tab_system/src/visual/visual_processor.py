@@ -6,10 +6,17 @@ class VisualProcessor:
     def __init__(self, video_path: str):
         print(f"[VisualProcessor] init {video_path}")
         self.video_path = video_path
-        self.cap = cv2.VideoCapture(video_path)
+        
+        try:
+            self.cap = cv2.VideoCapture(video_path)
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize video capture: {e}") from e
 
         if not self.cap.isOpened():
-            raise ValueError(f"Cannot open video: {video_path}")
+            raise FileNotFoundError(
+                f"Cannot open video file: {video_path}. "
+                f"Check that the file exists and is in a supported format."
+            )
 
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.frame_count = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
