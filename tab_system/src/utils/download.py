@@ -2,6 +2,9 @@ from pathlib import Path
 import urllib.request
 import urllib.error
 import socket
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def download_if_missing(path: Path, url: str):
@@ -18,16 +21,16 @@ def download_if_missing(path: Path, url: str):
     path = Path(path)
 
     if path.exists():
-        print(f"[download] model already exists at {path}")
+        logger.debug(f"Model already exists at {path}")
         return
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"[download] downloading model to {path} from {url}")
+    logger.info(f"Downloading model to {path} from {url}")
 
     try:
         urllib.request.urlretrieve(url, path)
-        print(f"[download] successfully downloaded to {path}")
+        logger.info(f"Successfully downloaded to {path}")
     except socket.timeout:
         raise RuntimeError(
             f"Download timed out while fetching {url}. "

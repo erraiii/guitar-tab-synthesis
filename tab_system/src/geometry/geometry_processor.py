@@ -2,6 +2,9 @@ import numpy as np
 from .primitives import compute_mean_direction, compute_line_pts, fit_line, frets_to_abc, point_dir_to_abc, \
     sort_frets_right_to_left, sort_strings_bottom_to_top
 from .primitives import filter_by_hands, align_string_direction
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GeometryProcessor:
     """
@@ -13,6 +16,7 @@ class GeometryProcessor:
     """
 
     def process(self, hand, guitar_det, shape):
+        logger.debug("Processing geometry")
         if guitar_det is None or not guitar_det.frets:
             return [], []
 

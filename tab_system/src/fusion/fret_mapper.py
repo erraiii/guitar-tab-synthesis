@@ -1,4 +1,7 @@
 from config import STANDARD_TUNING, MAX_FRETS
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FretboardMapper:
@@ -12,6 +15,7 @@ class FretboardMapper:
             tuning: список MIDI нот для открытых струн (от нижней к верхней)
                     Если не указан, используется стандартный строй
         """
+        logger.debug("Initializing FretboardMapper")
         self.tuning = tuning
         self.num_strings = len(self.tuning)
 

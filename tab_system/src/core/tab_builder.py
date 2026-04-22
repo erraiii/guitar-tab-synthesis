@@ -1,6 +1,9 @@
 from config import TAB_MAX_COLS
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import logging
+
+logger = logging.getLogger(__name__)
 
 STANDARD_TUNING_NAMES = ["E", "B", "G", "D", "A", "E"]  # 1 → 6
 NUM_STRINGS = 6

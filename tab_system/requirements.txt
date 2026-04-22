@@ -1,0 +1,12 @@
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+requests>=2.26.0
+matplotlib>=3.3.0
+
+# Computer Vision and ML
+mediapipe>=0.10.0
+ultralytics>=8.0.0
+
+# Optional for development
+pytest>=7.0.0

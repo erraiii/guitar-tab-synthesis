@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def generate_visual_candidates(finger_positions, capo=None, num_strings=6):
     """
     Генерирует кандидаты позиций

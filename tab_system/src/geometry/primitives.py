@@ -1,5 +1,8 @@
 import numpy as np
 from config import FRET_IOU_THRESHOLD, FRET_HORIZONTAL_OVERLAP, STRING_OUTER_GAP_RATIO, EPSILON
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def remove_duplicate_frets(frets, iou_threshold=None):
@@ -181,13 +184,11 @@ def fit_line(points):
     points: np.array shape (N,2)
 
     return:
-        centroid: np.array(2,) — точка на линии
-        direction: np.array(2,) — нормированный вектор вдоль линии
         abc: tuple (a,b,c) — коэффициенты линии в формате ax + by + c = 0
     """
     pts = np.array(points)
     if len(pts) < 2:
-        return None, None, None  # мало точек для линии
+        return None  # мало точек для линии
 
     # Центроид
     centroid = pts.mean(axis=0)

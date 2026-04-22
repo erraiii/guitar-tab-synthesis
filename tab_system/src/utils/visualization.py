@@ -2,11 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 from config import EPSILON
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def show_frame(frame, title: str = "Frame"):
     if frame is None:
-        print("Frame is None")
+        logger.warning("Frame is None")
         return
 
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

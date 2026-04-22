@@ -1,5 +1,8 @@
 from config import AUDIO_MIN_NOTE_DURATION, AUDIO_DUPLICATE_WINDOW, AUDIO_GROUPING_THRESHOLD
 from core.models import AudioNote, AudioEvent
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def filter_notes_by_len(notes):
@@ -67,10 +70,10 @@ def build_events(groups):
 
 
 def process_notes(notes):
-    print(f"  [process_notes] вход: {len(notes)} нот")
+    logger.debug(f"Input: {len(notes)} notes")
     notes = filter_notes_by_len(notes)
     notes = remove_duplicates(notes)
     groups = group_notes(notes)
     events = build_events(groups)
-    print(f"  [process_notes] событий: {len(events)}")
+    logger.debug(f"Events: {len(events)}")
     return events

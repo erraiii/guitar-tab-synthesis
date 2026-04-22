@@ -1,10 +1,13 @@
 import cv2
 from utils.audio import extract_audio
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class VisualProcessor:
     def __init__(self, video_path: str):
-        print(f"[VisualProcessor] init {video_path}")
+        logger.debug(f"Initializing VisualProcessor with {video_path}")
         self.video_path = video_path
         
         try:
@@ -32,13 +35,15 @@ class VisualProcessor:
         ret, frame = self.cap.read()
 
         if not ret:
-            print(f"[VisualProcessor] failed to read frame at {timestamp}")
+            logger.warning(f"Failed to read frame at {timestamp}")
             return None
 
         return frame
 
     def release(self):
+        logger.debug("Releasing video capture")
         self.cap.release()
 
     def extract_audio(self, output_path=None):
+        logger.debug("Extracting audio from video")
         return extract_audio(self.video_path, output_path)

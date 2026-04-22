@@ -1,6 +1,6 @@
 from collections import Counter
 from audio.audio_processor import AudioProcessor
-from config import MODEL_PATH
+from config import MODEL_PATH, PROJECT_ROOT
 from core.tab_builder import TabBuilder, save_tabs_pdf
 from fusion.fingering_processor import FingeringProcessor
 from geometry.primitives import remove_duplicate_frets
@@ -10,15 +10,32 @@ from visual.hand_detection import HandTracker, get_closest_hand
 from visual.visual_processor import VisualProcessor
 from visual.guitar_detector import GuitarDetector
 from geometry.geometry_processor import GeometryProcessor
-from utils.visualization import draw_hands
 from fusion.fusion_processor import FusionProcessor
 from fusion.fret_mapper import FretboardMapper
 from fusion.candidates import generate_visual_candidates
-from config import PROJECT_ROOT
+from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TabGenerator:
-    def __init__(self, video_path: str):
+    def __init__(self, video_path: str, output_dir=None, format="both"):
+        """
+        Initialize TabGenerator.
+        
+        Args:
+            video_path: Path to input video file
+            output_dir: Directory to save results. Default: PROJECT_ROOT/output
+            format: Output format ('txt', 'pdf', or 'both'). Default: 'both'
+        """
+        logger.debug(f"Initializing TabGenerator with video: {video_path}")
+        logger.debug(f"Output format: {format}")
+        
+        self.video_path = video_path
+        self.output_dir = Path(output_dir) if output_dir else PROJECT_ROOT / "output"
+        self.format = format
+        
         self.audio_processor = AudioProcessor()
         self.visual_processor = VisualProcessor(video_path)
         self.guitar_detector = GuitarDetector(MODEL_PATH)
@@ -28,7 +45,7 @@ class TabGenerator:
         self.fusion_processor = FusionProcessor(self.mapper)
 
     def generate(self):
-        print(f"[TabGenerator] Generating tabs")
+        logger.info("Generating tabs")
 
         audio_events = self._extract_audio_events()
         hand_data = self._track_hands()
@@ -43,21 +60,22 @@ class TabGenerator:
         return tabs_content
 
     def _extract_audio_events(self):
-        print("[TabGenerator] extracting audio events")
+        logger.info("Extracting audio events")
         audio_path = self.visual_processor.extract_audio()
 
         try:
             return self.audio_processor.process(audio_path)
         finally:
-            print("[TabGenerator] deleting audio")
+            logger.debug("Deleting audio")
             delete_audio(audio_path)
 
     def _track_hands(self):
-        print("[TabGenerator] tracking hands")
+        logger.info("Tracking hands")
         tracker = HandTracker(self.visual_processor)
         return tracker.track(self.visual_processor.duration)
 
     def _build_frames_data(self, audio_events, hand_data):
+        logger.info(f"Building frames data for {len(audio_events)} audio events")
         frames_data = []
         prev_guitar = None
 
@@ -70,9 +88,10 @@ class TabGenerator:
                 prev_guitar = frame_data["guitar"] or prev_guitar
                 frames_data.append(frame_data)
             except Exception as e:
-                print(f"[TabGenerator] skip event at {event.start:.3f}s: {e}")
+                logger.warning(f"Skip event at {event.start:.3f}s: {e}")
                 continue
 
+        logger.info(f"Built {len(frames_data)} frame data entries")
         return frames_data
 
     def _process_event(self, event, hand_data, prev_guitar):
@@ -101,7 +120,7 @@ class TabGenerator:
             )
 
             if geometry_result is None:
-                print(f"[TabGenerator] geometry processing failed at {t:.3f}s")
+                logger.warning(f"Geometry processing failed at {t:.3f}s")
                 string_lines = []
                 fret_lines = []
             else:
@@ -117,7 +136,7 @@ class TabGenerator:
                         t
                     )
                 except Exception as e:
-                    print(f"[TabGenerator] fingering detection failed at {t:.3f}s: {e}")
+                    logger.warning(f"Fingering detection failed at {t:.3f}s: {e}")
                     fingering = None
 
             capo_fret = None
@@ -131,7 +150,7 @@ class TabGenerator:
                     if capo_region is not None:
                         _, capo_fret = capo_region
                 except Exception as e:
-                    print(f"[TabGenerator] capo detection failed at {t:.3f}s: {e}")
+                    logger.warning(f"Capo detection failed at {t:.3f}s: {e}")
                     capo_fret = None
         else:
             string_lines = []
@@ -152,10 +171,14 @@ class TabGenerator:
     def _resolve_capo(self, frames_data):
         capo_values = [item["capo_fret"] for item in frames_data if item["capo_fret"] is not None]
         if not capo_values:
+            logger.debug("No capo detected")
             return None
-        return Counter(capo_values).most_common(1)[0][0]
+        capo = Counter(capo_values).most_common(1)[0][0]
+        logger.info(f"Resolved capo: fret {capo}")
+        return capo
 
     def _fuse_audio_visual(self, frames_data, final_capo):
+        logger.debug("Fusing audio and visual data")
         for item in frames_data:
             touch_positions = item["fingering"].positions if item["fingering"] is not None else []
             visual_candidates = generate_visual_candidates(
@@ -170,23 +193,30 @@ class TabGenerator:
             )
 
     def _render_tabs(self, frames_data, final_capo):
+        logger.debug("Rendering tabs")
         builder = TabBuilder(capo=final_capo)
         for item in frames_data:
             builder.add_event(item.get("fused", []))
 
         tabs_content = builder.render_chunked()
 
-        output_dir = PROJECT_ROOT / "output"
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        output_path = output_dir / "tabs.txt"
-        output_pdf_path = output_dir / "tabs.pdf"
-
-        output_path.write_text(tabs_content, encoding="utf-8")
-        save_tabs_pdf(tabs_content, output_pdf_path)
-
-        print(f"[TabGenerator] Tabs saved to {output_path}")
-        print(f"[TabGenerator] Tabs saved to {output_pdf_path}")
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        saved_files = []
+        
+        # Save TXT format
+        if self.format in ["txt", "both"]:
+            output_path = self.output_dir / "tabs.txt"
+            output_path.write_text(tabs_content, encoding="utf-8")
+            logger.info(f"Tabs saved to {output_path}")
+            saved_files.append(str(output_path))
+        
+        # Save PDF format
+        if self.format in ["pdf", "both"]:
+            output_pdf_path = self.output_dir / "tabs.pdf"
+            save_tabs_pdf(tabs_content, output_pdf_path)
+            logger.info(f"Tabs saved to {output_pdf_path}")
+            saved_files.append(str(output_pdf_path))
 
         return tabs_content
 

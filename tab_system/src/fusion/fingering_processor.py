@@ -1,9 +1,13 @@
 from core.models import FingerPosition, FingeringFrame
 from geometry.region import point_to_region
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FingeringProcessor:
     def detect(self, fingertips, fret_lines, string_lines, timestamp):
+        logger.debug(f"Detecting fingering at {timestamp}")
         positions = []
 
         for pt in fingertips:

@@ -3,14 +3,17 @@ from requests.exceptions import RequestException, Timeout
 from config import AUDIO_SERVICE_URL, AUDIO_SERVICE_TIMEOUT, AUDIO_CONFIDENCE_THRESHOLD
 from core.models import AudioNote
 from audio.postprocessing import process_notes
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AudioProcessor:
     def __init__(self):
-        print("[AudioProcessor] init")
+        logger.debug("AudioProcessor initialized")
 
     def process(self, audio_path: str):
-        print(f"[AudioProcessor] process {audio_path}")
+        logger.info(f"Processing audio: {audio_path}")
 
         try:
             with open(audio_path, "rb") as f:
@@ -67,8 +70,8 @@ class AudioProcessor:
                 )
             )
 
-        print(f"[AudioProcessor] got {len(audio_notes)} notes")
+        logger.info(f"Got {len(audio_notes)} notes")
         audio_notes = process_notes(audio_notes)
-        print(f"[AudioProcessor] got {len(audio_notes)} notes after filters")
+        logger.info(f"Got {len(audio_notes)} notes after filters")
 
         return audio_notes

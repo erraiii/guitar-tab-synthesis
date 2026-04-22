@@ -4,6 +4,9 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import cv2
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class HandDetector:
@@ -42,6 +45,7 @@ class HandTracker:
         self.step = step
 
     def track(self, duration):
+        logger.info("Starting hand tracking")
         results = []
 
         frame_idx = 0
@@ -88,6 +92,7 @@ class HandTracker:
 
             frame_idx += frame_step
 
+        logger.info(f"Hand tracking completed, found {len(results)} hand detections")
         return results
 
 

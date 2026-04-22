@@ -12,8 +12,6 @@ HAND_MODEL_URL = (
 
 MAX_HANDS = 2
 
-VIDEO_PATH = "C:/Users/aivan/Downloads/oceans.mp4"
-
 AUDIO_SERVICE_URL = "http://localhost:8000/predict"
 AUDIO_SERVICE_TIMEOUT = 60
 AUDIO_CONFIDENCE_THRESHOLD = 0.45
@@ -38,6 +36,10 @@ FUSION_PERFECT_SCORE = 100
 FUSION_UNSEEN_PENALTY = -10
 
 EPSILON = 1e-6
+
+# Logging configuration
+LOG_LEVEL = "WARNING"
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 MODEL_PATH = MODELS_DIR / "guitar_model.pt"
 

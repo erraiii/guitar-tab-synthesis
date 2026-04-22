@@ -1,4 +1,7 @@
 from config import FUSION_PERFECT_SCORE, FUSION_UNSEEN_PENALTY
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FusionProcessor:
@@ -58,6 +61,7 @@ class FusionProcessor:
         """
         Теперь учитывает, что струна может быть использована только один раз
         """
+        logger.debug("Fusing event")
 
         candidates = []
 

@@ -1,6 +1,9 @@
 
 import subprocess
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def extract_audio(video_path: str, output_path: str = None):
@@ -38,6 +41,6 @@ def delete_audio(path: str):
     if path and os.path.exists(path):
         try:
             os.remove(path)
-            print(f"[delete_audio] removed {path}")
+            logger.debug(f"Removed audio file: {path}")
         except Exception as e:
-            print(f"[delete_audio] failed to remove {path} ({type(e).__name__}): {e}")
+            logger.warning(f"Failed to remove audio file {path}: {e}")

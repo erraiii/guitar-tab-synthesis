@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def line_val(line, point):
     a, b, c = line
     x, y = point
