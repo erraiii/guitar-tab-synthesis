@@ -48,10 +48,10 @@ class FusionProcessor:
 
         for vs, vf in visual_candidates:
             if s == vs:
-                penalties.append(abs(f - vf))
+                penalties.append(5 * abs(f - vf))
 
         if penalties:
-            return -min(penalties)
+            return FUSION_PERFECT_SCORE - min(penalties)
 
         # если струна вообще не наблюдалась
         return FUSION_UNSEEN_PENALTY
@@ -59,7 +59,7 @@ class FusionProcessor:
     # --- 4. FUSE ДЛЯ СОБЫТИЯ ---
     def fuse_event(self, event, fingering, visual_candidates):
         """
-        Теперь учитывает, что струна может быть использована только один раз
+        Учитывает, что струна может быть использована только один раз
         """
         logger.debug("Fusing event")
 
