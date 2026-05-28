@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -14,7 +15,7 @@ MAX_HANDS = 2
 
 # VIDEO_PATH = "C:/Users/aivan/Downloads/oceans.mp4"
 
-AUDIO_SERVICE_URL = "http://localhost:8000/predict"
+AUDIO_SERVICE_URL = os.getenv("AUDIO_SERVICE_URL", "http://localhost:8000/predict")
 AUDIO_SERVICE_TIMEOUT = 60
 AUDIO_CONFIDENCE_THRESHOLD = 0.45
 AUDIO_MIN_NOTE_DURATION = 0.05

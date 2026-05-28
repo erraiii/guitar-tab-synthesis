@@ -188,7 +188,7 @@ def fit_line(points):
     """
     pts = np.array(points)
     if len(pts) < 2:
-        return None  # мало точек для линии
+        return None, None, None  # мало точек для линии
 
     # Центроид
     centroid = pts.mean(axis=0)
